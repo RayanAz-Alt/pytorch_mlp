@@ -64,7 +64,16 @@ class LogisticRegression(LinearModel):
         y_i: the gold label for that example
         learning_rate (float): keep it at the default value for your plots
         """
-        raise NotImplementedError # Q1.2 (a,b)
+        z = np.dot(self.W, x_i)
+        softmax = np.exp(z) / np.sum(np.exp(z))
+
+        one_hot = np.zeros(self.W.shape[0])  
+        one_hot[y_i] = 1
+        gradient = np.outer(softmax - one_hot, x_i) 
+        
+        self.W -= learning_rate * gradient
+
+        return
 
 
 class MLP(object):
