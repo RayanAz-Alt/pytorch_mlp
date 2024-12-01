@@ -53,8 +53,7 @@ class Perceptron(LinearModel):
         if predicted_label != y_i:
             self.W[y_i] += x_i
             self.W[predicted_label] -= x_i
-        return 
-
+        return
 
 
 class LogisticRegression(LinearModel):
@@ -69,7 +68,7 @@ class LogisticRegression(LinearModel):
 
         one_hot = np.zeros(self.W.shape[0])  
         one_hot[y_i] = 1
-        gradient = np.outer(softmax - one_hot, x_i) 
+        gradient = np.outer(softmax - one_hot, x_i) + l2_penalty * self.W
         
         self.W -= learning_rate * gradient
 
