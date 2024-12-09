@@ -77,13 +77,34 @@ class LogisticRegression(LinearModel):
 
 class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
-        # Initialize an MLP with a single hidden layer.
-        raise NotImplementedError # Q1.3 (a)
+        self.n_classes = n_classes
+        self.n_features = n_features
+        self.hidden_size = hidden_size
+
+        self.weights_input_hidden = np.random.normal(
+            loc=0.1, scale=0.1, size=(n_features, hidden_size)
+        )
+        self.bias_hidden = np.zeros(hidden_size)
+        
+        self.weights_hidden_output = np.random.normal(
+            loc=0.1, scale=0.1, size=(hidden_size, n_classes)
+        )
+        self.bias_output = np.zeros(n_classes)
 
     def predict(self, X):
-        # Compute the forward pass of the network. At prediction time, there is
-        # no need to save the values of hidden nodes.
-        raise NotImplementedError # Q1.3 (a)
+        # Compute the forward pass of the network in a vectorized manner.
+        # Input X is assumed to be a 2D NumPy array where each row is an input sample.
+
+        hidden_layer_output = np.maximum(0, np.dot(X, self.weights_input_hidden) + self.bias_hidden)
+
+        logits = np.dot(hidden_layer_output, self.weights_hidden_output) + self.bias_output
+
+        exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))  # Stable softmax
+        softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+
+        return np.argmax(softmax, axis=1)
+
+
 
     def evaluate(self, X, y):
         """
@@ -100,7 +121,33 @@ class MLP(object):
         """
         Dont forget to return the loss of the epoch.
         """
-        raise NotImplementedError # Q1.3 (a)
+        N = y.shape[0]
+
+        y_one_hot = np.eye(self.n_classes)[y]  
+
+        hidden_layer_output = np.maximum(0, np.dot(X, self.weights_input_hidden) + self.bias_hidden)
+        logits = np.dot(hidden_layer_output, self.weights_hidden_output) + self.bias_output
+        exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+
+        loss = -np.sum(y_one_hot * np.log(softmax+ 1e-15)) / N  
+
+        grad_logits = (softmax - y_one_hot) / N
+        grad_weights_hidden_output = np.dot(hidden_layer_output.T, grad_logits)
+        grad_bias_output = np.sum(grad_logits, axis=0)
+
+        grad_hidden_layer = np.dot(grad_logits, self.weights_hidden_output.T)
+        grad_hidden_layer[hidden_layer_output <= 0] = 0
+
+        grad_weights_input_hidden = np.dot(X.T, grad_hidden_layer)
+        grad_bias_hidden = np.sum(grad_hidden_layer, axis=0)
+
+        self.weights_hidden_output -= learning_rate * grad_weights_hidden_output
+        self.bias_output -= learning_rate * grad_bias_output
+        self.weights_input_hidden -= learning_rate * grad_weights_input_hidden
+        self.bias_hidden -= learning_rate * grad_bias_hidden
+
+        return loss
 
 
 def plot(epochs, train_accs, val_accs, filename=None):
