@@ -48,12 +48,11 @@ class Perceptron(LinearModel):
         y_i (scalar): the gold label for that example
         other arguments are ignored
         """
-        score = np.dot(self.W, x_i)
-        predicted_label = np.argmax(score)
-        if predicted_label != y_i:
-            self.W[y_i] += x_i
-            self.W[predicted_label] -= x_i
-        return
+        y_hat = self.predict(x_i)
+        
+        if y_hat != y_i:
+            self.W[y_i] += x_i  
+            self.W[y_hat] -= x_i
 
 
 class LogisticRegression(LinearModel):
